@@ -6,8 +6,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http.response import Http404, HttpResponseRedirect
 from django.utils import timezone
 from django.views.generic.base import RedirectView, TemplateView
+from django.http import HttpResponse
+from django.http import JsonResponse
 
-from .models import DiaryEntry
+from .models import DiaryEntry, DiaryCategory, DiaryImage, DiaryTasks
+
+import json
 
 DATE_FORMAT = '%Y-%m-%d'
 
@@ -159,3 +163,144 @@ class SearchView(TemplateView):
     def post(self, request):
         search = request.POST.get('search')
         return self.get(request, search=search)
+
+
+class CategoryView(LoginRequiredMixin, TemplateView):
+    """View for diary category preview."""
+    template_name = 'category_preview.html'
+    login_url = '/login/'
+
+    def get(self, request, date=None):
+        categories = DiaryCategory.objects.all().filter(author_id=request.user.id)
+        categories = [i['Category'] for i in categories.values()]
+
+        context = {
+            'categories': categories
+        }
+
+        return self.render_to_response(context)
+
+
+class CategoryAdd(LoginRequiredMixin, TemplateView):
+    """View for diary category add."""
+    template_name = 'category_add.html'
+    login_url = '/login/'
+
+    def post(self, request):
+
+        if request.method == "POST":
+
+            category = request.POST.get('category')
+
+            if len(str(category)) > 0 and str(category).isspace() == False:
+
+                new_category = DiaryCategory(
+                    date=datetime.now().date(),
+                    Category=category,
+                    author=request.user
+                )
+
+                new_category.save()
+
+                messages.add_message(
+                    request, messages.SUCCESS, 'Категория успешно сохранена!'
+                )
+
+                return HttpResponseRedirect(f'/diary/category/add/')
+
+            else:
+                messages.add_message(
+                    request, messages.SUCCESS, 'Категорию не удалось сохранить!'
+                )
+
+                return HttpResponseRedirect(f'/diary/category/add/')
+
+        else:
+            messages.add_message(
+                request, messages.SUCCESS, 'Категорию не удалось сохранить!'
+            )
+
+            return HttpResponseRedirect(f'/diary/category/add/')
+
+
+class CategoryUpdate(LoginRequiredMixin, TemplateView):
+    """View for diary category update view."""
+    template_name = 'category_update.html'
+    login_url = '/login/'
+
+    def get(self, request, category=None):
+
+        if request.method == "GET":
+
+            context = {
+                'category': str(category).split("=")[1]
+            }
+
+            return self.render_to_response(context)
+
+
+class CategorySaveUpdate(LoginRequiredMixin, TemplateView):
+    """View for diary category add."""
+    template_name = 'category_update.html'
+    login_url = '/login/'
+
+    def post(self, request, category=None):
+
+        new_category = request.POST.get('new_category')
+        print(category)
+        update_category = DiaryCategory.objects.filter(
+            Category=str(category).split("=")[1],
+            author=request.user
+        ).update(Category=str(new_category))
+
+        print(update_category)
+
+        messages.add_message(
+            request, messages.SUCCESS, 'Категория успешно обновлена!'
+        )
+
+        return HttpResponseRedirect(f'/diary/category/update/category={new_category}')
+
+
+class CategoryDelete(LoginRequiredMixin, TemplateView):
+    """View for diary category delete."""
+    template_name = 'category_preview.html'
+    login_url = '/login/'
+
+    def post(self, request):
+
+        if request.is_ajax():
+
+            category = json.loads(request.body)
+
+            my_category = category['category_to_delete']
+
+            delete_category = DiaryCategory.objects.filter(
+                Category=my_category,
+                author=request.user
+            ).delete()
+
+            return JsonResponse({"success": True})
+
+        else:
+
+            return JsonResponse({"success": False})
+
+
+class TaskPreviewView(LoginRequiredMixin, TemplateView):
+    """View for diary category preview."""
+    template_name = 'task_preview.html'
+    login_url = '/login/'
+
+    def get(self, request):
+        tasks = DiaryTasks.objects.raw(
+            f"SELECT * FROM diary_diarytasks "
+            f"left join diary_diarycategory "
+            f"on diary_diarytasks.category_id = diary_diarycategory.id "
+            f"where diary_diarytasks.date = '{datetime.now().date()}';"
+        )
+        context = {
+            'tasks': tasks
+        }
+
+        return self.render_to_response(context)

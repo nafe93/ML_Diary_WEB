@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{# JS #}
+{% block extrajs %}
+<script type="text/javascript">
+  $(function() {
+    $('#date_from').calendar({
+      type: 'date'
+    });
+    $('#date_to').calendar({
+      type: 'date'
+    });
+  });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_preview.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<div class="ui container">
+
+  <div>
+    <div>
+      <h3>Date From</h3>
+      <div class="ui calendar" id="date_from">
+        <div class="ui input left icon" style="width: 100%">
+          <i class="calendar icon"></i>
+          <input type="text" placeholder="Date">
+        </div>
+      </div>
+      <br/>
+    </div>
+
+    <div>
+      <h3>Date To</h3>
+      <div class="ui calendar" id="date_to">
+        <div class="ui input left icon" style="width: 100%">
+          <i class="calendar icon"></i>
+          <input type="text" placeholder="Date">
+        </div>
+      </div>
+      <br/>
+    </div>
+  </div>
+
+  <table style="background:#282C34; text-align: center; color: #9CA3B0;" class="ui celled inverted table">
+    <thead>
+      <tr>
+        <th class="">Дата</th>
+        <th class="">Название задачи</th>
+        <th class="">Категория</th>
+        <th class="">Статус выполнения</th>
+        <th class=""></th>
+      </tr>
+    </thead>
+
+    <tbody class="tbody_table">
+    {% if tasks %}
+      {% for task in tasks %}
+        <tr>
+          <td>{{task.date}}</td>
+          <td>{{task.task}}</td>
+          <td>{{task.Category}}</td>
+          <td>
+          <div class="ui teal progress">
+            <div class="bar" style="width:{{task.completion_percent}}%">
+              <div class="progress">{{task.completion_percent}}</div>
+            </div>
+          </div>
+          </td>
+          <td>
+            <div class="update_category"><i class="edit-icon pencil icon"></i></div>
+            <div class="update_category"><i class="delete icon"></i></div>
+          </td>
+        </tr>
+      {% endfor %}
+    {% endif %}
+    </tbody>
+  </table>
+</div>
+
+
+<div class="entry-container paper-stack-effect">
+      <p class="edit-link">
+        <a href="/diary/category/add/" class="ui button teal wide">Добавить задачу</a>
+      </p>
+  </div>
+</div>
+
+{% endblock %}

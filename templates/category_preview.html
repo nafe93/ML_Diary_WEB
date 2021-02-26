@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{# JS #}
+{% block extrajs %}
+
+{% csrf_token %}
+<script type="text/javascript">
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  let delete_result = false;
+
+  $(function() {
+
+    $('.ui.sticky')
+      .sticky({
+        context: '.entry-container',
+        offset: 120,
+      })
+    ;
+
+    $('.message .close')
+    .on('click', function() {
+      category_to_delete = $(this).closest('.message').text().trim();
+
+      $.ajax({
+        type: "POST",
+        dataType: 'json',
+        headers: {'X-CSRFToken': csrftoken},
+        url: "/diary/category/delete/",
+        data: JSON.stringify({category_to_delete}),
+        cache: false,
+        success: function(data){
+          delete_result = data['success']
+        }
+      });
+      if (delete_result == true)
+      $(this)
+        .closest('.message')
+        .transition('fade')
+      ;
+    })
+  ;
+
+  $(".update_category").on('click', function (){
+
+    let category = $(this).closest('.message').text().trim();
+    window.location.href = "/diary/category/update/category=" + category;
+  });
+
+  });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_preview.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{# Main Categories container #}
+
+{# categories #}
+{% if categories %}
+  {% for category in categories %}
+    <div class="ui positive icon message">
+      <div class="update_category">
+        <i class="edit-icon pencil icon"></i>
+      </div>
+      <i class="close icon"></i>
+      <div class="content">
+        <div class="header mini-header">
+          {{ category }}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<div class="entry-container paper-stack-effect">
+      <p class="edit-link">
+        <a href="/diary/category/add/" class="ui button teal wide">Добавить категорию</a>
+      </p>
+  </div>
+</div>
+
+{% endblock %}

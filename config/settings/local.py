@@ -9,7 +9,7 @@ DEBUG = True
 
 DATABASES = {
     'default': dj_database_url.config(
-        default='postgres://postgres:@localhost:5432/djangodiary'
+        default='postgres://postgres:qwe123QWE@localhost:5432/djangodiary'
     )
 }
 

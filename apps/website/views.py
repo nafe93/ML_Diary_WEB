@@ -1,9 +1,11 @@
 from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import reverse
 from django.views.generic.base import RedirectView, TemplateView
 
+
+User = get_user_model()
 
 class IndexView(TemplateView):
     template_name = 'index.html'

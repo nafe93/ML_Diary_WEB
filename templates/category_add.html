@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{# JS #}
+{% block extrajs %}
+<script src="{% static 'js/textarea.js' %}" charset="utf-8"></script>
+
+<script type="text/javascript">
+  $(function() {
+
+    $('.ui.sticky')
+      .sticky({
+        context: '.entry-container',
+        offset: 120,
+      })
+    ;
+
+    $('.message .close')
+    .on('click', function() {
+      $(this)
+        .closest('.message')
+        .transition('fade')
+      ;
+    })
+  ;
+  });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
+{% endblock %}
+
+{% block content %}
+
+{# Messages #}
+{% if messages %}
+  {% for message in messages %}
+    <div class="ui positive icon message">
+      <i class="close icon"></i>
+      <i class="save icon mini-icon"></i>
+      <div class="content">
+        <div class="header mini-header">
+          {{ message }}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+<form class="" action="/diary/category/add/" method="post">
+  {% csrf_token %}
+  <div class="entry-container paper-stack-effect">
+
+    {# Editor area #}
+    <textarea class="entry category-edit noselect" placeholder="Введите категорию" name="category">{{ category.category }}</textarea>
+  </div>
+  <div class="save-button">
+    <input type="submit" name="" value="Сохранить" class="ui button teal wide">
+  </div>
+</form>
+{% endblock %}

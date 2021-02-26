@@ -81,3 +81,11 @@
   color: #676a71;
   font-size: 12px;
 }
+
+.update_category {
+  cursor: pointer;
+}
+
+.update_category i:hover {
+  color: #00B5AD;
+}

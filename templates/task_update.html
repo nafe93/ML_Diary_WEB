@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{# JS #}
+{% block extrajs %}
+<script src="{% static 'js/textarea.js' %}" charset="utf-8"></script>
+
+<script type="text/javascript">
+  $(function() {
+     $('#date_update_task').calendar({
+       type: 'date',
+       today: true,
+       text: {
+         months:
+         [
+           'Январь',
+           'Февраль',
+           'Март',
+           'Апрель',
+           'Май',
+           'Июнь',
+           'Июль',
+           'Август',
+           'Сентябрь',
+           'Октябрь',
+           'Ноябрь',
+           'Декабрь'
+         ]
+       }
+     });
+
+
+
+    $('.ui.sticky')
+      .sticky({
+        context: '.entry-container',
+        offset: 120,
+      })
+    ;
+
+    $('.message .close')
+    .on('click', function() {
+      $(this)
+        .closest('.message')
+        .transition('fade')
+      ;
+    })
+  ;
+  });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
+<style>
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+color: #ABB2C0;
+opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: #ABB2C0;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: #ABB2C0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+{# Messages #}
+{% if messages %}
+  {% for message in messages %}
+    <div class="ui positive icon message">
+      <i class="close icon"></i>
+      <i class="save icon mini-icon"></i>
+      <div class="content">
+        <div class="header mini-header">
+          {{ message }}
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endif %}
+
+
+
+{% for task in tasks %}
+<form class="" action="/diary/tasks/update/save/{{task.id}}" method="post">
+  {% csrf_token %}
+  <div class="entry-container paper-stack-effect">
+    <div class="ui form">
+      <div class="field">
+        <label>Название задача</label>
+        <input class="entry category-edit noselect" placeholder="Введите задачу" name="task" value="{{task.task}}">
+        <label>Процент выполнения</label>
+        <input class="entry category-edit noselect" placeholder="Процент выполнения"
+               name="completion_percent" value="{{task.completion_percent}}">
+        <label>Category</label>
+        <select class="ui dropdown" name="task_category">
+        {# categories #}
+        {% if categories %}
+          {% for category in categories %}
+            {% if category.id == task.category.id %}
+              <option value="{{category.id}}" selected>{{category.Category}}</option>
+            {% else %}
+              <option value="{{category.id}}">{{category.Category}}</option>
+            {% endif %}
+
+          {% endfor %}
+        {% endif %}
+        </select>
+        <label>Дата выполнения</label>
+        <div class="ui calendar" id="date_update_task">
+          <div class="ui input left icon" style="width: 100%; color: #ABB2C0">
+            <i class="calendar icon"></i>
+            <input type="text" placeholder="Дата ДД-ММ-ГГГГ" name="date_update_task_text" value="{{ task.date|date:'m-d-y'}}">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="save-button">
+    <input type="submit" name="" value="Сохранить" class="ui button teal wide">
+  </div>
+</form>
+{% endfor %}
+{% endblock %}

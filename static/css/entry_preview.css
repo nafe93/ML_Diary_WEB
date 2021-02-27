@@ -86,6 +86,14 @@
   cursor: pointer;
 }
 
+.update_task {
+  cursor: pointer;
+}
+
+.delete_task {
+  cursor: pointer;
+}
+
 .update_category i:hover {
   color: #00B5AD;
 }

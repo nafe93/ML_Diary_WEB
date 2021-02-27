@@ -16,6 +16,24 @@ import json
 DATE_FORMAT = '%Y-%m-%d'
 
 
+def month_index(index):
+    maps = {
+        'Январь': 1,
+        'Февраль': 2,
+        'Март': 3,
+        'Апрель': 4,
+        'Май': 5,
+        'Июнь': 6,
+        'Июль': 7,
+        'Август': 8,
+        'Сентябрь': 9,
+        'Октябрь': 10,
+        'Ноябрь': 11,
+        'Декабрь': 12,
+    }
+    return maps.get(index)
+
+
 def month_names(index):
     maps = {
         1: 'Январь',
@@ -32,6 +50,12 @@ def month_names(index):
         12: 'Декабрь',
     }
     return maps.get(index)
+
+
+def raw_queryset_as_values_list(raw_qs):
+    columns = raw_qs.columns
+    for row in raw_qs:
+        yield tuple(getattr(row, col) for col in columns)
 
 
 class CalendarView(LoginRequiredMixin, TemplateView):
@@ -172,10 +196,9 @@ class CategoryView(LoginRequiredMixin, TemplateView):
 
     def get(self, request, date=None):
         categories = DiaryCategory.objects.all().filter(author_id=request.user.id)
-        categories = [i['Category'] for i in categories.values()]
 
         context = {
-            'categories': categories
+            'categories': categories.values()
         }
 
         return self.render_to_response(context)
@@ -229,9 +252,7 @@ class CategoryUpdate(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
 
     def get(self, request, category=None):
-
         if request.method == "GET":
-
             context = {
                 'category': str(category).split("=")[1]
             }
@@ -245,15 +266,12 @@ class CategorySaveUpdate(LoginRequiredMixin, TemplateView):
     login_url = '/login/'
 
     def post(self, request, category=None):
-
         new_category = request.POST.get('new_category')
-        print(category)
+
         update_category = DiaryCategory.objects.filter(
             Category=str(category).split("=")[1],
             author=request.user
         ).update(Category=str(new_category))
-
-        print(update_category)
 
         messages.add_message(
             request, messages.SUCCESS, 'Категория успешно обновлена!'
@@ -264,8 +282,6 @@ class CategorySaveUpdate(LoginRequiredMixin, TemplateView):
 
 class CategoryDelete(LoginRequiredMixin, TemplateView):
     """View for diary category delete."""
-    template_name = 'category_preview.html'
-    login_url = '/login/'
 
     def post(self, request):
 
@@ -288,7 +304,7 @@ class CategoryDelete(LoginRequiredMixin, TemplateView):
 
 
 class TaskPreviewView(LoginRequiredMixin, TemplateView):
-    """View for diary category preview."""
+    """View for diary tasks preview."""
     template_name = 'task_preview.html'
     login_url = '/login/'
 
@@ -304,3 +320,191 @@ class TaskPreviewView(LoginRequiredMixin, TemplateView):
         }
 
         return self.render_to_response(context)
+
+
+class TaskPreviewViewDate(LoginRequiredMixin, TemplateView):
+    """View for diary tasks preview by date."""
+
+    def post(self, request):
+        if request.is_ajax():
+            get_request = json.loads(request.body)
+            get_month_from, get_day_from, get_year_from = str(get_request['date_from']).split(" ")
+
+            get_day_from = get_day_from[:-1]
+            get_month_from = month_index(get_month_from)
+            date_from = str(get_year_from) + "-" + str(get_month_from) + "-" + str(get_day_from)
+
+            get_month_to, get_day_to, get_year_to = str(get_request['date_to']).split(" ")
+
+            get_day_to = get_day_to[:-1]
+            get_month_to = month_index(get_month_to)
+            date_to = str(get_year_to) + "-" + str(get_month_to) + "-" + str(get_day_to)
+
+            tasks = DiaryTasks.objects.raw(
+                f"SELECT * FROM diary_diarytasks "
+                f"left join diary_diarycategory "
+                f"on diary_diarytasks.category_id = diary_diarycategory.id "
+                f"where diary_diarytasks.date >= '{date_from}' and diary_diarytasks.date <= '{date_to}'"
+                f"order by diary_diarytasks.date desc;"
+            )
+
+        list_tasks = raw_queryset_as_values_list(tasks)
+        list_tasks = list(list_tasks)
+
+        return JsonResponse({"success": list_tasks})
+
+
+class TaskAdd(LoginRequiredMixin, TemplateView):
+    """View for diary task add."""
+    template_name = 'task_add.html'
+    login_url = '/login/'
+
+    def get(self, request):
+        categories = DiaryCategory.objects.all().filter(author_id=request.user.id)
+        categories = [i for i in categories.values()]
+
+        context = {
+            'categories': categories
+        }
+
+        return self.render_to_response(context)
+
+
+class TaskSave(LoginRequiredMixin, TemplateView):
+    """View for diary task add."""
+    template_name = 'task_add.html'
+    login_url = '/login/'
+
+    def post(self, request):
+
+        task = request.POST.get('task')
+        completion_percent = request.POST.get('completion_percent')
+        task_category = request.POST.get('task_category')
+        date_create_task_text = request.POST.get('date_create_task_text')
+
+        if (len(str(task)) > 0 and str(task).isspace() == False) and \
+                (len(str(completion_percent)) > 0 and str(completion_percent).isspace() == False) and \
+                (len(str(task_category)) > 0 and str(task_category).isspace() == False) and \
+                (len(str(date_create_task_text)) > 0 and str(date_create_task_text).isspace() == False):
+
+            get_month_from, get_day_from, get_year_from = str(date_create_task_text).split(" ")
+
+            get_day_from = get_day_from[:-1]
+            get_month_from = month_index(get_month_from)
+            date_create = str(get_year_from) + "-" + str(get_month_from) + "-" + str(get_day_from)
+
+            new_task = DiaryTasks(
+                task=str(task),
+                completion_percent=int(completion_percent),
+                category_id=int(task_category),
+                date=date_create,
+                author=request.user
+            )
+
+            new_task.save()
+
+            messages.add_message(
+                request, messages.SUCCESS, 'Задача успешно сохранена!'
+            )
+
+            return HttpResponseRedirect(f'/diary/tasks/add/')
+
+        else:
+            messages.add_message(
+                request, messages.SUCCESS, 'Задачу не удалось сохранить!'
+            )
+
+            return HttpResponseRedirect(f'/diary/tasks/add/')
+
+
+class TaskDelete(LoginRequiredMixin, TemplateView):
+    """View for diary task delete."""
+
+    def post(self, request):
+
+        if request.is_ajax():
+
+            task_id = json.loads(request.body)
+            task_id = int(task_id['task_delete'])
+
+            task = DiaryTasks.objects.filter(
+                id=task_id,
+                author=request.user
+            ).delete()
+
+            return JsonResponse({"success": True})
+
+        else:
+
+            return JsonResponse({"success": False})
+
+
+class TaskUpdate(LoginRequiredMixin, TemplateView):
+    """View for diary task update."""
+    template_name = 'task_update.html'
+    login_url = '/login/'
+
+    def get(self, request, task_id=None):
+        categories = DiaryCategory.objects.all().filter(author_id=request.user.id)
+        categories = [i for i in categories.values()]
+
+        tasks = DiaryTasks.objects.raw(
+            f"SELECT * FROM diary_diarytasks "
+            f"left join diary_diarycategory "
+            f"on diary_diarytasks.category_id = diary_diarycategory.id "
+            f"where diary_diarytasks.id = '{task_id}'"
+        )
+
+        context = {
+            'categories': categories,
+            'tasks': tasks
+        }
+
+        return self.render_to_response(context)
+
+
+class TaskUpdateSave(LoginRequiredMixin, TemplateView):
+    """View for diary task update."""
+    template_name = 'task_update.html'
+    login_url = '/login/'
+
+    def post(self, request, task_id=None):
+        task = request.POST.get('task')
+        completion_percent = request.POST.get('completion_percent')
+        task_category = request.POST.get('task_category')
+        date_update_task_text = request.POST.get('date_update_task_text')
+
+        if (len(str(task)) > 0 and str(task).isspace() == False) and \
+                (len(str(completion_percent)) > 0 and str(completion_percent).isspace() == False) and \
+                (len(str(task_category)) > 0 and str(task_category).isspace() == False) and \
+                (len(str(date_update_task_text)) > 0 and str(date_update_task_text).isspace() == False):
+
+            get_month_from, get_day_from, get_year_from = str(date_update_task_text).split(" ")
+
+            get_day_from = get_day_from[:-1]
+            get_month_from = month_index(get_month_from)
+            date_update = str(get_year_from) + "-" + str(get_month_from) + "-" + str(get_day_from)
+
+            update_task = DiaryTasks.objects.filter(
+                id=task_id,
+                author=request.user
+            ).update(
+                task=str(task),
+                completion_percent=int(completion_percent),
+                category_id=int(task_category),
+                date=date_update
+            )
+
+            messages.add_message(
+                request, messages.SUCCESS, 'Задача успешно обновлена!'
+            )
+
+            return HttpResponseRedirect(f'/diary/tasks/update/' + task_id)
+
+        else:
+
+            messages.add_message(
+                request, messages.SUCCESS, 'Задачу не удалось обновить!'
+            )
+
+            return HttpResponseRedirect(f'/diary/tasks/update/' + task_id)

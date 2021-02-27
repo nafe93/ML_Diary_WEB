@@ -54,6 +54,36 @@ urlpatterns = [
         name='task-preview'
     ),
     url(
+        r'^tasks/preview/$',
+        views.TaskPreviewViewDate.as_view(),
+        name='task-preview-date'
+    ),
+    url(
+        r'^tasks/add/$',
+        views.TaskAdd.as_view(),
+        name='task-preview-date'
+    ),
+    url(
+        r'^tasks/save/$',
+        views.TaskSave.as_view(),
+        name='task-save'
+    ),
+    url(
+        r'^tasks/delete/$',
+        views.TaskDelete.as_view(),
+        name='task-delete'
+    ),
+    url(
+        r'^tasks/update/(?P<task_id>[0-9]+)$',
+        views.TaskUpdate.as_view(),
+        name='task_update'
+    ),
+    url(
+        r'^tasks/update/save/(?P<task_id>.+)$',
+        views.TaskUpdateSave.as_view(),
+        name='task_update_save'
+    ),
+    url(
         r'^search/$',
         views.SearchView.as_view(),
         name='search'

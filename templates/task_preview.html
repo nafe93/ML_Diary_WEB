@@ -4,14 +4,135 @@
 
 {# JS #}
 {% block extrajs %}
+
+{% csrf_token %}
 <script type="text/javascript">
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
   $(function() {
+
+    $('.delete').click(function() {
+      let task_delete = $(this).attr('id');
+      $.ajax({
+        type: "POST",
+        dataType: 'json',
+        headers: {'X-CSRFToken': csrftoken},
+        url: "/diary/tasks/delete/",
+        data: JSON.stringify({task_delete}),
+        cache: false,
+        success: function(data){
+          console.log(data)
+          $("#"+ task_delete +".delete").closest("tr").remove()
+        }
+      });
+    });
+
+    $(".edit-icon").on('click', function () {
+      let task_update = $(this).attr('id');
+      window.location.href = "/diary/tasks/update/" + task_update;
+    });
+
     $('#date_from').calendar({
-      type: 'date'
+      type: 'date',
+      today: true,
+      text: {
+        months:
+        [
+          'Январь',
+          'Февраль',
+          'Март',
+          'Апрель',
+          'Май',
+          'Июнь',
+          'Июль',
+          'Август',
+          'Сентябрь',
+          'Октябрь',
+          'Ноябрь',
+          'Декабрь'
+        ]
+      }
+
     });
     $('#date_to').calendar({
-      type: 'date'
+      type: 'date',
+      today: true,
+      text: {
+        months:
+        [
+          'Январь',
+          'Февраль',
+          'Март',
+          'Апрель',
+          'Май',
+          'Июнь',
+          'Июль',
+          'Август',
+          'Сентябрь',
+          'Октябрь',
+          'Ноябрь',
+          'Декабрь'
+        ]
+      }
     });
+
+    $('#select_date_task_preview')
+    .on('click', function() {
+      date_from = $("#date_from_text").val()
+      date_to = $("#date_to_text").val()
+
+      $.ajax({
+        type: "POST",
+        dataType: 'json',
+        headers: {'X-CSRFToken': csrftoken},
+        url: "/diary/tasks/preview/",
+        data: JSON.stringify({"date_from":date_from, "date_to":date_to}),
+        cache: false,
+        success: function(data){
+          $(".tbody_table").children().remove();
+
+          data["success"].forEach((element) => {
+            $(".tbody_table").append(
+              "        <tr>\n" +
+              "          <td>" + element[1] + "</td>\n" +
+              "          <td>" + element[8] + "</td>\n" +
+              "          <td>" + element[2] + "</td>\n" +
+              "          <td>\n" +
+              "          <div class=\"ui teal progress\">\n" +
+              "            <div class=\"bar\" style=\"width:"+ element[3] +"%\">\n" +
+              "              <div class=\"progress\">"+ element[3] +"</div>\n" +
+              "            </div>\n" +
+              "          </div>\n" +
+              "          </td>\n" +
+              "          <td>\n" +
+              "            <div class=\"update_task\"><i id=\""+ element[0] +"\" class=\"edit-icon pencil icon\"></i></div>\n" +
+              "            <div class=\"delete_task\"><i id=\""+ element[0] +"\" class=\"delete icon\"></i></div>\n" +
+              "          </td>\n" +
+              "        </tr>"
+            )
+          });
+
+          $('.delete').click(function() {
+            let task_delete = $(this).attr('id');
+            $.ajax({
+              type: "POST",
+              dataType: 'json',
+              headers: {'X-CSRFToken': csrftoken},
+              url: "/diary/tasks/delete/",
+              data: JSON.stringify({task_delete}),
+              cache: false,
+              success: function (data) {
+                console.log(data)
+                $("#" + task_delete + ".delete").closest("tr").remove()
+              }
+            });
+          });
+          $(".edit-icon").on('click', function () {
+            let task_update = $(this).attr('id');
+            window.location.href = "/diary/tasks/update/" + task_update;
+          });
+        }
+      });
+    })
   });
 </script>
 {% endblock %}
@@ -19,6 +140,21 @@
 {% block extrastyle %}
 <link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
 <link rel="stylesheet" type="text/css" href="{% static 'css/entry_preview.css' %}">
+<style>
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+color: #ABB2C0;
+opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: #ABB2C0;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: #ABB2C0;
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -27,34 +163,39 @@
 
   <div>
     <div>
-      <h3>Date From</h3>
+      <h3>Дата от</h3>
       <div class="ui calendar" id="date_from">
         <div class="ui input left icon" style="width: 100%">
           <i class="calendar icon"></i>
-          <input type="text" placeholder="Date">
+          <input type="text" placeholder="Дата ДД-ММ-ГГГГ" id="date_from_text">
         </div>
       </div>
       <br/>
     </div>
 
     <div>
-      <h3>Date To</h3>
+      <h3>Дата до</h3>
       <div class="ui calendar" id="date_to">
         <div class="ui input left icon" style="width: 100%">
           <i class="calendar icon"></i>
-          <input type="text" placeholder="Date">
+          <input type="text" placeholder="Дата ДД-ММ-ГГГГ" id="date_to_text">
         </div>
       </div>
       <br/>
     </div>
+
+    <p class="edit-link">
+        <button id="select_date_task_preview" class="ui button teal wide">Выбрать</button>
+    </p>
+
   </div>
 
   <table style="background:#282C34; text-align: center; color: #9CA3B0;" class="ui celled inverted table">
     <thead>
       <tr>
         <th class="">Дата</th>
-        <th class="">Название задачи</th>
         <th class="">Категория</th>
+        <th class="">Название задачи</th>
         <th class="">Статус выполнения</th>
         <th class=""></th>
       </tr>
@@ -65,8 +206,8 @@
       {% for task in tasks %}
         <tr>
           <td>{{task.date}}</td>
-          <td>{{task.task}}</td>
           <td>{{task.Category}}</td>
+          <td>{{task.task}}</td>
           <td>
           <div class="ui teal progress">
             <div class="bar" style="width:{{task.completion_percent}}%">
@@ -75,8 +216,8 @@
           </div>
           </td>
           <td>
-            <div class="update_category"><i class="edit-icon pencil icon"></i></div>
-            <div class="update_category"><i class="delete icon"></i></div>
+            <div class="update_task"><i id="{{task.id}}" class="edit-icon pencil icon"></i></div>
+            <div class="delete_task"><i id="{{task.id}}" class="delete icon"></i></div>
           </td>
         </tr>
       {% endfor %}
@@ -88,7 +229,7 @@
 
 <div class="entry-container paper-stack-effect">
       <p class="edit-link">
-        <a href="/diary/category/add/" class="ui button teal wide">Добавить задачу</a>
+        <a href="/diary/tasks/add/" class="ui button teal wide">Добавить задачу</a>
       </p>
   </div>
 </div>

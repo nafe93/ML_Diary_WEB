@@ -12,6 +12,11 @@ from django.http import JsonResponse
 from .models import DiaryEntry, DiaryCategory, DiaryImage, DiaryTasks
 
 import json
+import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+
 
 DATE_FORMAT = '%Y-%m-%d'
 
@@ -508,3 +513,88 @@ class TaskUpdateSave(LoginRequiredMixin, TemplateView):
             )
 
             return HttpResponseRedirect(f'/diary/tasks/update/' + task_id)
+
+
+class StatisticsPreview(LoginRequiredMixin, TemplateView):
+    """View for diary tasks preview by date."""
+
+    """View for diary statistics."""
+    template_name = 'statistics_preview.html'
+    login_url = '/login/'
+
+    def post(self, request):
+
+        if request.is_ajax():
+
+            get_request = json.loads(request.body)
+            get_month_from, get_day_from, get_year_from = str(get_request['date_from']).split(" ")
+
+            get_day_from = get_day_from[:-1]
+            get_month_from = month_index(get_month_from)
+            date_from = str(get_year_from) + "-" + str(get_month_from) + "-" + str(get_day_from)
+
+            get_month_to, get_day_to, get_year_to = str(get_request['date_to']).split(" ")
+
+            get_day_to = get_day_to[:-1]
+            get_month_to = month_index(get_month_to)
+            date_to = str(get_year_to) + "-" + str(get_month_to) + "-" + str(get_day_to)
+
+            categories_id = tuple(get_request["categories_id"])
+
+            tasks = DiaryTasks.objects.raw(
+                f"SELECT * FROM diary_diarytasks "
+                f"left join diary_diarycategory "
+                f"on diary_diarytasks.category_id = diary_diarycategory.id "
+                f"where diary_diarytasks.date >= '{date_from}' and diary_diarytasks.date <= '{date_to}'"
+                f"and diary_diarytasks.category_id in {categories_id} "
+                f"order by diary_diarytasks.date desc;"
+            )
+
+            list_tasks = raw_queryset_as_values_list(tasks)
+            list_tasks = list(list_tasks)
+            # create df
+            df = pd.DataFrame(list_tasks)
+            df = df[[1, 2, 3, 8]]
+            df.columns = ['date', 'task', 'complete', 'category']
+            # unique class
+            categories = list(pd.unique(df.category))
+
+            # create mean
+            grouped_frame = df.groupby(['date', 'category']).mean('complete')
+            grouped_frame['date'] = grouped_frame.index.get_level_values(0)
+            grouped_frame['category'] = grouped_frame.index.get_level_values(1)
+            grouped_frame.reset_index(drop=True, inplace=True)
+
+
+            X = []
+            Y = []
+            for category in categories:
+                x = list(grouped_frame[grouped_frame['category'] == category]['date'])
+                y = list(grouped_frame[grouped_frame['category'] == category]['complete'])
+                X.append(x)
+                Y.append(y)
+
+            # pie
+            score_by_category = df.groupby(['category']).sum()
+            score = score_by_category.sum()
+            norm_score = score_by_category / score
+            pie = list(norm_score['complete'])
+
+            return JsonResponse({"x": X, "y": Y, "categories": categories, "pie": pie})
+
+        return JsonResponse({"x": [], "y": [], "categories": []})
+
+class StatisticsCategories(LoginRequiredMixin, TemplateView):
+    """View for diary task add."""
+    template_name = 'statistics_preview.html'
+    login_url = '/login/'
+
+    def get(self, request):
+        categories = DiaryCategory.objects.all().filter(author_id=request.user.id)
+        categories = [i for i in categories.values()]
+
+        context = {
+            'categories': categories
+        }
+
+        return self.render_to_response(context)

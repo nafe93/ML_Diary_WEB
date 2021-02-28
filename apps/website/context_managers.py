@@ -8,6 +8,7 @@ def extra_context(request):
             ('Календарь', reverse('diary:calendar')),
             ('Задачи', reverse('diary:task-preview')),
             ('Категории', reverse('diary:category')),
+            ('Статистика', reverse('diary:analysis')),
             ('Поиск', reverse('diary:search'))
             # ('Tags', '/tags/'),
         )

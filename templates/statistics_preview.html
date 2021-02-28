@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% load static %}
+
+{# JS #}
+{% block extrajs %}
+
+{% csrf_token %}
+<script type="text/javascript">
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+  $(function() {
+
+    $('#date_from').calendar({
+      type: 'date',
+      today: true,
+      text: {
+        months:
+        [
+          'Январь',
+          'Февраль',
+          'Март',
+          'Апрель',
+          'Май',
+          'Июнь',
+          'Июль',
+          'Август',
+          'Сентябрь',
+          'Октябрь',
+          'Ноябрь',
+          'Декабрь'
+        ]
+      }
+
+    });
+    $('#date_to').calendar({
+      type: 'date',
+      today: true,
+      text: {
+        months:
+        [
+          'Январь',
+          'Февраль',
+          'Март',
+          'Апрель',
+          'Май',
+          'Июнь',
+          'Июль',
+          'Август',
+          'Сентябрь',
+          'Октябрь',
+          'Ноябрь',
+          'Декабрь'
+        ]
+      }
+    });
+
+    $('#select_date_task_preview')
+    .on('click', function() {
+      date_from = $("#date_from_text").val()
+      date_to = $("#date_to_text").val()
+      categories_id = $("#task_category").val()
+
+      $.ajax({
+        type: "POST",
+        dataType: 'json',
+        headers: {'X-CSRFToken': csrftoken},
+        url: "/diary/analysis/view/",
+        data: JSON.stringify({"date_from":date_from, "date_to":date_to, "categories_id": categories_id}),
+        cache: false,
+        success: function(data){
+
+          console.log(data)
+
+          let traces = []
+          for (let i = 0; i < data['categories'].length; ++i)
+          {
+
+            let trace = {
+              x: data['x'][i],
+              y: data['y'][i],
+              name: data['categories'][i],
+              type: 'bar',
+            };
+            traces.push(trace);
+          }
+
+          var layout = {barmode: 'group'};
+          Plotly.newPlot('render_bar', traces, layout);
+
+          let pie_list = [{
+            values: data['pie'],
+            labels: data['categories'],
+            type: 'pie'
+          }];
+
+          Plotly.newPlot('render_pie', pie_list, layout);
+
+        }
+      });
+    })
+  });
+</script>
+{% endblock %}
+
+{% block extrastyle %}
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_base.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'css/entry_preview.css' %}">
+<style>
+
+::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+color: #ABB2C0;
+opacity: 1; /* Firefox */
+}
+
+:-ms-input-placeholder { /* Internet Explorer 10-11 */
+  color: #ABB2C0;
+}
+
+::-ms-input-placeholder { /* Microsoft Edge */
+  color: #ABB2C0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="ui container">
+  <div class="ui form">
+    <h2>Выберете дату для анализа</h2>
+    <div class="entry-container paper-stack-effect">
+      <div>
+        <h5>Дата от</h5>
+        <div class="ui calendar" id="date_from">
+          <div class="ui input left icon" style="width: 100%">
+            <i class="calendar icon"></i>
+            <input type="text" placeholder="Дата" id="date_from_text">
+          </div>
+        </div>
+        <br/>
+      </div>
+
+      <div>
+        <h5>Дата до</h5>
+        <div class="ui calendar" id="date_to">
+          <div class="ui input left icon" style="width: 100%">
+            <i class="calendar icon"></i>
+            <input type="text" placeholder="Дата " id="date_to_text">
+          </div>
+        </div>
+        <br/>
+      </div>
+
+      <div class="field">
+        <select multiple="" class="ui dropdown" name="task_category" id="task_category">
+          {# categories #}
+          {% if categories %}
+            {% for category in categories %}
+              <option value="{{category.id}}">{{category.Category}}</option>
+            {% endfor %}
+          {% endif %}
+        </select>
+      </div>
+  <p class="edit-link">
+    <button id="select_date_task_preview" class="ui button teal wide">Выбрать</button>
+  </p>
+  </div>
+</div>
+
+
+<div class="ui container">
+  <div class="ui form">
+    <div class="entry-container paper-stack-effect">
+      <div id="render_bar">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ui container">
+  <div class="ui form">
+    <div class="entry-container paper-stack-effect">
+      <div id="render_pie">
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}

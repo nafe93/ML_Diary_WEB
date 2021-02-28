@@ -84,6 +84,16 @@ urlpatterns = [
         name='task_update_save'
     ),
     url(
+        r'^analysis/$',
+        views.StatisticsCategories.as_view(),
+        name='analysis'
+    ),
+    url(
+        r'^analysis/view/$',
+        views.StatisticsPreview.as_view(),
+        name='analysis_view'
+    ),
+    url(
         r'^search/$',
         views.SearchView.as_view(),
         name='search'

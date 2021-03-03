@@ -186,10 +186,6 @@ class EntryEditView(EntryPreviewView):
         positive_part = positive / overall_score
         neutral_part = neutral / overall_score
 
-        print('Negativeness:', negative_part)
-        print('Positiveness:', positive_part)
-        print('Neutrality:', neutral_part)
-
         DiaryEntry.objects.update_or_create(
             author=request.user,
             date=date,

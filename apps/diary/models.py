@@ -37,6 +37,24 @@ class DiaryEntry(models.Model):
         verbose_name=_('Text'),
     )
 
+    neutrality = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name=_('Neutrality'),
+    )
+
+    positiveness = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name=_('Positiveness'),
+    )
+
+    negativeness = models.FloatField(
+        null=True,
+        blank=True,
+        verbose_name=_('Negativeness'),
+    )
+
     tags = models.ManyToManyField(
         to=Tag,
         blank=True,

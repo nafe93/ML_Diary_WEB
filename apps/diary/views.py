@@ -17,6 +17,12 @@ import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
 
+# text analysis
+import nltk
+import dostoevsky
+from dostoevsky.tokenization import RegexTokenizer
+from dostoevsky.models import FastTextSocialNetworkModel
+from nltk.tokenize import sent_tokenize
 
 DATE_FORMAT = '%Y-%m-%d'
 
@@ -154,11 +160,44 @@ class EntryEditView(EntryPreviewView):
     def post(self, request, date=None):
         text = request.POST.get('text')
 
+        tokenizer = RegexTokenizer()
+        model = FastTextSocialNetworkModel(tokenizer=tokenizer)
+        sentences = sent_tokenize(text, language="russian")
+
+        results = model.predict(sentences, k=1)
+
+        negative = 0
+        positive = 0
+        neutral = 0
+
+        for emotion in results:
+            key = list(emotion.keys())[0]
+            if key == 'neutral':
+                neutral += emotion[key]
+            elif key == 'positive':
+                positive += emotion[key]
+            elif key == 'negative':
+                negative += emotion[key]
+            else:
+                continue
+
+        overall_score = negative + positive + neutral
+        negative_part = negative / overall_score
+        positive_part = positive / overall_score
+        neutral_part = neutral / overall_score
+
+        print('Negativeness:', negative_part)
+        print('Positiveness:', positive_part)
+        print('Neutrality:', neutral_part)
+
         DiaryEntry.objects.update_or_create(
             author=request.user,
             date=date,
             defaults={
-                'text': text
+                'text': text,
+                'negativeness': negative_part,
+                'positiveness': positive_part,
+                'neutrality': neutral_part
             }
         )
 

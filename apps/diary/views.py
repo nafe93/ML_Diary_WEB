@@ -148,7 +148,12 @@ class EntryPreviewView(LoginRequiredMixin, TemplateView):
             'next_date': (entry.date + timezone.timedelta(days=1)),
             'entry': entry,
             'title': entry.date,
+            'negativeness': round(entry.negativeness, 2),
+            'positiveness': round(entry.positiveness, 2),
+            'neutrality': round(entry.neutrality, 2)
         }
+
+        print(context)
 
         return self.render_to_response(context)
 
@@ -191,9 +196,9 @@ class EntryEditView(EntryPreviewView):
             date=date,
             defaults={
                 'text': text,
-                'negativeness': negative_part,
-                'positiveness': positive_part,
-                'neutrality': neutral_part
+                'negativeness': round(negative_part, 2),
+                'positiveness': round(positive_part, 2),
+                'neutrality':   round(neutral_part, 2)
             }
         )
 

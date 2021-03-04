@@ -84,7 +84,20 @@
   {% endif %}
 
   {# Entry date #}
-  <div class="entry-date">{{ entry.date|date:'F d, Y (l)' }}</div>
+  <div class="entry-date">
+    {{ entry.date|date:'F d, Y (l)' }}
+    {% if entry.negativeness > 0.5 %}
+      <img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+    {% elif entry.positiveness > 0.5 %}
+      <img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+    {% elif entry.positiveness > entry.negativeness and entry.positiveness > entry.neutrality %}
+      <img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+    {% elif entry.negativeness > entry.positiveness and entry.neutrality > entry.neutrality %}
+      <img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+    {% else %}
+      <img src="{% static 'images/confused.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+    {% endif %}
+  </div>
 
   {# Entry #}
   <div class="entry">

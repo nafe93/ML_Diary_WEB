@@ -20,7 +20,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="1fe5d417-3475-48f8-9bfc-dd231f7d614a" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../apps/diary/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/../apps/diary/models.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../apps/diary/views.py" beforeDir="false" afterPath="$PROJECT_DIR$/../apps/diary/views.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,6 +51,7 @@
       <option name="presentableId" value="Default" />
       <updated>1614800587065</updated>
       <workItem from="1614800588167" duration="35000" />
+      <workItem from="1615032806658" duration="8000" />
     </task>
     <servers />
   </component>
@@ -66,9 +67,10 @@
     </option>
   </component>
   <component name="WindowStateProjectService">
-    <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1614800621545">
+    <state x="740" y="275" key="FileChooserDialogImpl" timestamp="1615032810625">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
+    <state x="740" y="275" key="FileChooserDialogImpl/0.0.1920.1040@0.0.1920.1040" timestamp="1615032810625" />
     <state x="740" y="275" key="FileChooserDialogImpl/1920.9.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1614800621545" />
   </component>
 </project>

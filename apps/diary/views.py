@@ -140,17 +140,33 @@ class EntryPreviewView(LoginRequiredMixin, TemplateView):
 
         entry, created = DiaryEntry.objects.get_or_create(
             author=request.user, date=date,
-            defaults={'text': ''}
+            defaults={'text': '', 'negativeness':0.0, 'positiveness':0.0, 'neutrality':0.0}
         )
+
+        if entry.negativeness is not None:
+            negativeness = round(entry.negativeness, 2)
+        else:
+            negativeness = 0.0
+
+        if entry.positiveness is not None:
+            positiveness = round(entry.positiveness, 2)
+        else:
+            positiveness = 0.0
+
+        if entry.neutrality is not None:
+            neutrality = round(entry.neutrality, 2)
+        else:
+            neutrality = 0.0
+
 
         context = {
             'prev_date': (entry.date - timezone.timedelta(days=1)),
             'next_date': (entry.date + timezone.timedelta(days=1)),
             'entry': entry,
             'title': entry.date,
-            'negativeness': round(entry.negativeness, 2),
-            'positiveness': round(entry.positiveness, 2),
-            'neutrality': round(entry.neutrality, 2)
+            'negativeness': negativeness,
+            'positiveness': positiveness,
+            'neutrality': neutrality
         }
 
         print(context)
@@ -580,6 +596,9 @@ class StatisticsPreview(LoginRequiredMixin, TemplateView):
             date_to = str(get_year_to) + "-" + str(get_month_to) + "-" + str(get_day_to)
 
             categories_id = tuple(get_request["categories_id"])
+
+            if len(categories_id) == 1:
+                categories_id = ', '.join('({})'.format(t[0]) for t in categories_id)
 
             tasks = DiaryTasks.objects.raw(
                 f"SELECT * FROM diary_diarytasks "

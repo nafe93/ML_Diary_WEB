@@ -19,6 +19,11 @@ urlpatterns = [
         name='entry-edit'
     ),
     url(
+        r'^date-(?P<date>[\w-]+)/update/$',
+        views.EntryUpdateView.as_view(),
+        name='entry-edit'
+    ),
+    url(
         r'^calendar/$',
         views.CalendarView.as_view(),
         name='calendar'

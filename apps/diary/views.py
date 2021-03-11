@@ -169,8 +169,6 @@ class EntryPreviewView(LoginRequiredMixin, TemplateView):
             'neutrality': neutrality
         }
 
-        print(context)
-
         return self.render_to_response(context)
 
 
@@ -223,6 +221,44 @@ class EntryEditView(EntryPreviewView):
         )
 
         return HttpResponseRedirect(f'/diary/date-{date}')
+
+
+class EntryUpdateView(EntryPreviewView):
+    template_name = 'entry_preview.html'
+    login_url = '/login/'
+
+    def post(self, request, date=None):
+
+        if request.is_ajax():
+
+            mood = json.loads(request.body)
+            mood = mood['txt']
+
+            if mood == "sad":
+                negative = 1
+                positive = 0
+                neutral = 0
+            elif mood == "smile":
+                negative = 0
+                positive = 1
+                neutral = 0
+            else:
+                negative = 0
+                positive = 0
+                neutral = 1
+
+            DiaryEntry.objects.update_or_create(
+                author=request.user,
+                date=date,
+                defaults={
+                    'negativeness': round(negative, 2),
+                    'positiveness': round(positive, 2),
+                    'neutrality':   round(neutral, 2)
+                }
+            )
+            return JsonResponse({"success": True})
+        else:
+            return JsonResponse({"success": False})
 
 
 class SearchView(TemplateView):

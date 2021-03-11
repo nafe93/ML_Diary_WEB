@@ -4,7 +4,10 @@
 
 {# JS #}
 {% block extrajs %}
+{% csrf_token %}
 <script type="text/javascript">
+  const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
   $(function() {
 
     $('.ui.sticky')
@@ -36,6 +39,26 @@
         window.location.replace("/diary/date-{{ next_date|date:'Y-m-d' }}");
       }
   });
+
+  $(".dropdown-content a").on('click', function() {
+    let txt = $("img",this).attr("src")
+    txt = txt.split("/")[3]
+    txt = txt.split(".")[0]
+     $.ajax({
+        type: "POST",
+        dataType: 'json',
+        headers: {'X-CSRFToken': csrftoken},
+        url: "/diary/date-{{ entry.date|date:'Y-m-d' }}/update/",
+        data: JSON.stringify({txt}),
+        cache: false,
+        success: function(data){
+          if(data['success'] === true)
+          {
+            location.reload();
+          }
+        }
+      });
+  })
 
   });
 </script>
@@ -87,15 +110,50 @@
   <div class="entry-date">
     {{ entry.date|date:'F d, Y (l)' }}
     {% if entry.negativeness > 0.5 %}
-      <img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+      <div class="dropdown">
+        <a href="#" class="change_mood"><img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;"></a>
+        <div class="dropdown-content">
+          <a href="#"><img src="{% static 'images/smile.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+          <a href="#"><img src="{% static 'images/sad.png' %}" style="width: 35px; height: 35px; position: relative; "></a>
+          <a href="#"><img src="{% static 'images/confused.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+        </div>
+      </div>
     {% elif entry.positiveness > 0.5 %}
-      <img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+      <div class="dropdown">
+         <a href="#" class="change_mood"><img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;"></a>
+        <div class="dropdown-content">
+          <a href="#"><img src="{% static 'images/smile.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+          <a href="#"><img src="{% static 'images/sad.png' %}" style="width: 35px; height: 35px; position: relative; "></a>
+          <a href="#"><img src="{% static 'images/confused.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+        </div>
+      </div>
     {% elif entry.positiveness > entry.negativeness and entry.positiveness > entry.neutrality %}
-      <img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+      <div class="dropdown">
+         <a href="#" class="change_mood"><img src="{% static 'images/smile.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;"></a>
+        <div class="dropdown-content">
+          <a href="#"><img src="{% static 'images/smile.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+          <a href="#"><img src="{% static 'images/sad.png' %}" style="width: 35px; height: 35px; position: relative; "></a>
+          <a href="#"><img src="{% static 'images/confused.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+        </div>
+      </div>
     {% elif entry.negativeness > entry.positiveness and entry.neutrality > entry.neutrality %}
-      <img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+      <div class="dropdown">
+        <a href="#" class="change_mood"><img src="{% static 'images/sad.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;"></a>
+        <div class="dropdown-content">
+          <a href="#"><img src="{% static 'images/smile.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+          <a href="#"><img src="{% static 'images/sad.png' %}" style="width: 35px; height: 35px; position: relative; "></a>
+          <a href="#"><img src="{% static 'images/confused.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+        </div>
+      </div>
     {% else %}
-      <img src="{% static 'images/confused.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;">
+      <div class="dropdown">
+        <a href="#" class="change_mood"><img src="{% static 'images/confused.png' %}" style="width: 50px; position: absolute; padding: 5px; margin-top: -15px;"></a>
+        <div class="dropdown-content">
+          <a href="#"><img src="{% static 'images/smile.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+          <a href="#"><img src="{% static 'images/sad.png' %}" style="width: 35px; height: 35px; position: relative; "></a>
+          <a href="#"><img src="{% static 'images/confused.png' %}" style="width: 35px; height: 35px; position: relative;"></a>
+        </div>
+      </div>
     {% endif %}
   </div>
 
